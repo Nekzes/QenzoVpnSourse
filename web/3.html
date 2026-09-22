@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QenzoVPN | Свободный и безопасный интернет</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap');
+
+        :root {
+            --bg-base: #060807;
+            --bg-card: rgba(13, 18, 16, 0.65);
+            --primary: #00e573;
+            --primary-glow: rgba(0, 229, 115, 0.2);
+            --wl-color: #00f0ff;
+            --text-main: #f0f4f2;
+            --text-muted: #8a9e96;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --font: 'Manrope', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font); scroll-behavior: smooth; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* Фоновая кибер-сетка */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Центральный градиентный свет */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 50%; width: 100vw; height: 100vh;
+            transform: translateX(-50%);
+            background: radial-gradient(circle at 50% 30%, rgba(0, 229, 115, 0.1) 0%, transparent 60%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* 3D Globe & Stars Background */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none; opacity: 0.7;
+        }
+
+        /* Container */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: rgba(6, 8, 7, 0.7);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        .nav-content {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 70px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 4%;
+        }
+        .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; text-decoration: none; color: #fff;}
+        .logo span { color: var(--primary); }
+        
+        .nav-links { display: flex; gap: 32px; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+
+        .btn-login {
+            background: rgba(0, 229, 115, 0.1); border: 1px solid rgba(0, 229, 115, 0.3);
+            color: var(--primary); padding: 10px 20px; border-radius: 12px; font-weight: 700; text-decoration: none; transition: 0.3s;
+        }
+        .btn-login:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary-glow); }
+
+        /* Sections */
+        section { padding: 120px 0; }
+        
+        /* Hero Section */
+        .hero { min-height: 100vh; display: flex; align-items: center; text-align: center; position: relative; padding-top: 70px; }
+        .hero-content { max-width: 850px; margin: 0 auto; position: relative; }
+        .hero h1 { font-size: clamp(42px, 6vw, 76px); font-weight: 800; line-height: 1.1; letter-spacing: -2px; margin-bottom: 24px; position: relative; text-shadow: 0 0 40px rgba(0,229,115,0.1); }
+        .hero h1 span { color: var(--primary); }
+        .hero p { font-size: clamp(16px, 2vw, 20px); color: var(--text-muted); margin-bottom: 32px; font-weight: 500;}
+        
+        /* Плашки под заголовком */
+        .hero-badges { display: flex; gap: 12px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; }
+        .hero-badge {
+            background: rgba(0, 229, 115, 0.05);
+            border: 1px solid rgba(0, 229, 115, 0.2);
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);
+        }
+        .hero-badge .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+        .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 16px 32px; border-radius: 16px; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            text-decoration: none; transition: 0.3s; cursor: pointer; border: 1px solid transparent;
+        }
+        .btn-primary { background: var(--primary); color: #000; box-shadow: 0 4px 15px rgba(0,229,115,0.2); }
+        .btn-primary:hover { background: #00ff80; box-shadow: 0 0 35px rgba(0,229,115,0.4); transform: translateY(-3px); }
+        .btn-outline { background: rgba(255,255,255,0.03); color: #fff; border-color: rgba(255,255,255,0.1); }
+        .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: var(--primary); transform: translateY(-3px); }
+
+        /* Section Titles */
+        .section-title { font-size: clamp(32px, 4vw, 48px); font-weight: 800; text-align: center; margin-bottom: 70px; letter-spacing: -1px; }
+        .section-title span { color: var(--primary); }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 32px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr; gap: 32px; }
+        @media (min-width: 768px) {
+            .grid-2 { grid-template-columns: repeat(2, 1fr); }
+            .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 40px 32px; backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover { transform: translateY(-12px); border-color: rgba(0, 229, 115, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        
+        .card-icon { width: 56px; height: 56px; background: rgba(0,229,115,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 24px; font-size: 28px; border: 1px solid rgba(0,229,115,0.2); }
+        .card h3 { font-size: 22px; font-weight: 800; margin-bottom: 16px; color: #fff; letter-spacing: -0.5px;}
+        .card p { font-size: 15px; color: var(--text-muted); line-height: 1.7; }
+
+        /* Pricing Cards */
+        .price-card { display: flex; flex-direction: column; height: 100%; padding: 40px; }
+        .plan-name { font-size: 13px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 16px; }
+        .plan-price { font-size: 56px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 32px; display: flex; align-items: baseline; gap: 8px; letter-spacing: -2px;}
+        .plan-price span { font-size: 16px; color: var(--text-muted); font-weight: 500; letter-spacing: 0;}
+        .plan-features { list-style: none; margin-bottom: 40px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        .plan-features li { font-size: 15px; color: #d0d0d0; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+        .plan-features li span { color: var(--primary); font-weight: 800; font-size: 18px; }
+        
+        .price-card.whitelist { background: linear-gradient(180deg, rgba(0, 240, 255, 0.05) 0%, transparent 100%), var(--bg-card); border-color: rgba(0, 240, 255, 0.2); }
+        .price-card.whitelist .plan-name { color: var(--wl-color); }
+        .price-card.whitelist .plan-price { color: var(--wl-color); }
+        .price-card.whitelist .plan-features li span { color: var(--wl-color); }
+
+        /* Footer links */
+        .link-card { display: flex; align-items: center; gap: 24px; text-decoration: none; padding: 24px 32px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); transition: 0.3s; }
+        .link-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); transform: translateX(8px); }
+        .link-card h4 { color: #fff; font-size: 18px; margin-bottom: 4px; font-weight: 800;}
+        .link-card p { color: var(--text-muted); font-size: 14px; }
+
+        /* Кнопка-логотип n3k00 Experience */
+        .n3k00-logo-btn {
+            display: inline-block;
+            margin-bottom: 30px;
+            padding: 14px 28px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .n3k00-logo-btn span { color: var(--primary); }
+        .n3k00-logo-btn:hover {
+            border-color: var(--primary);
+            background: rgba(0, 229, 115, 0.05);
+            box-shadow: 0 0 25px var(--primary-glow);
+            transform: translateY(-5px);
+        }
+
+        /* Анимация появления */
+        .reveal { 
+            opacity: 0; 
+            transform: translateY(40px) scale(0.95); 
+            filter: blur(8px);
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.3, 1); 
+        }
+        .reveal.active { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            filter: blur(0);
+        }
+
+        /* Mobile Nav */
+        @media (max-width: 768px) {
+            .nav-content { padding: 0 20px; }
+            .nav-links { display: none; }
+            .btn-login { font-size: 12px; padding: 8px 16px; }
+            section { padding: 80px 0; }
+            .card { padding: 32px 24px; }
+            .price-card { padding: 32px 24px; }
+            .hero h1 { font-size: 38px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Обновленный Canvas (Глобус + Звезды) -->
+    <canvas id="bg-canvas"></canvas>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="#" class="logo">Qenzo<span>VPN</span></a>
+            <div class="nav-links">
+                <a href="#about">О сервисе</a>
+                <a href="#tech">Технологии</a>
+                <a href="#pricing">Тарифы</a>
+            </div>
+            <a href="https://app.n3k00.ru" target="_blank" class="btn-login">Личный кабинет</a>
+        </div>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="container hero-content reveal">
+            <h1>Плати за объем,<br><span>а не за минуты</span></h1>
+            <p>Забудьте про подписки, которые сгорают без использования. Инновационные протоколы, свободный доступ к любым ресурсам и оплата только за скачанные гигабайты.</p>
+            
+            <!-- Технологичные бейджи -->
+            <div class="hero-badges">
+                <div class="hero-badge"><div class="dot"></div> AES-256 GCM</div>
+                <div class="hero-badge"><div class="dot"></div> No Logs Policy</div>
+                <div class="hero-badge"><div class="dot"></div> Smart Routing</div>
+                <div class="hero-badge"><div class="dot"></div> VLESS / Hysteria</div>
+            </div>
+
+            <div class="hero-btns">
+                <a href="https://t.me/Qenzo_vpn_bot" target="_blank" class="btn btn-primary">Перейти в Telegram-бот</a>
+                <a href="#about" class="btn btn-outline">Узнать больше</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="container">
+            <h2 class="section-title reveal">Что такое <span>VPN</span> и зачем он нужен?</h2>
+            <div class="grid-3">
+                <div class="card reveal">
+                    <div class="card-icon">🌍</div>
+                    <h3>Свобода в сети</h3>
+                    <p>Смена виртуального адреса позволяет сохранить доступ к международным площадкам, пользоваться привычными сервисами и приложениями без ограничений скорости.</p>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.1s;">
+                    <div class="card-icon">🛡️</div>
+                    <h3>Защита трафика</h3>
+                    <p>Весь ваш трафик надёжно зашифровывается. Провайдер, администратор публичного Wi-Fi или злоумышленники не смогут перехватить ваши пароли и историю браузера.</p>
+                </div>
+                <div class="card reveal" style="transition-delay: 0.2s;">
+                    <div class="card-icon">⚡</div>
+                    <h3>Почему QenzoVPN?</h3>
+                    <p>Мы не арендуем сотни серверов, которые легко вычисляются и ограничиваются. Наш подход — точечная настройка самых современных протоколов для бесперебойной и стабильной работы.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tech" style="background: rgba(0,0,0,0.4); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); backdrop-filter: blur(10px);">
+        <div class="container">
+            <div class="grid-2" style="align-items: center;">
+                <div class="reveal">
+                    <h2 style="font-size: 42px; font-weight: 800; margin-bottom: 24px; line-height: 1.1;">Новейшие протоколы<br><span style="color: var(--primary);">VLESS & Hysteria</span></h2>
+                    <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 18px;">Стандартные VPN (OpenVPN, WireGuard) давно научились распознавать и замедлять. Мы используем технологии нового поколения.</p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 24px;">
+                        <li style="display: flex; gap: 16px; align-items: flex-start;">
+                            <span style="color: var(--primary); font-size: 24px;">✓</span>
+                            <div>
+                                <h4 style="font-size: 18px; color: #fff; margin-bottom: 4px;">Маскировка под обычный трафик</h4>
+                                <p style="font-size: 15px; color: var(--text-muted);">Провайдер думает, что вы просто листаете обычный веб-сайт, поэтому не вмешивается в соединение.</p>
+                            </div>
+                        </li>
+                        <li style="display: flex; gap: 16px; align-items: flex-start;">
+                            <span style="color: var(--primary); font-size: 24px;">✓</span>
+                            <div>
+                                <h4 style="font-size: 18px; color: #fff; margin-bottom: 4px;">Никакой абонентской платы</h4>
+                                <p style="font-size: 15px; color: var(--text-muted);">Идеология сервиса — 1 рубль = 1 ГБ трафика. Купленные объемы не сгорают в конце месяца.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div style="background: #060807; border: 1px solid rgba(0,229,115,0.2); border-radius: 20px; padding: 32px; font-family: monospace; font-size: 15px; color: #00f0ff; box-shadow: 0 20px 50px rgba(0,240,255,0.1); line-height: 1.8;">
+                        <span style="color: #8a9e96;">></span> systemctl status qenzovpn<br>
+                        <span style="color: var(--primary);">●</span> qenzovpn.service - Advanced Traffic Routing<br>
+                        &nbsp;&nbsp; Loaded: loaded (/etc/systemd/...)<br>
+                        &nbsp;&nbsp; Active: <span style="color: var(--primary); font-weight: bold;">active (running)</span><br><br>
+                        <span style="color: #8a9e96;">></span> protocols: [VLESS, Hysteria2, Reality]<br>
+                        <span style="color: #8a9e96;">></span> encryption: AES-256-GCM / ChaCha20<br>
+                        <span style="color: #8a9e96;">></span> deep_packet_inspection: bypassed<br>
+                        <span style="color: #8a9e96;">></span> status: <span style="color: #fff;">connection secured.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <div class="container">
+            <h2 class="section-title reveal">Тарифы <span>QenzoVPN</span></h2>
+            <div class="grid-3">
+                <!-- TEST -->
+                <div class="card price-card reveal">
+                    <div class="plan-name">TEST .</div>
+                    <div class="plan-price">1 ₽ <span>/ навсегда</span></div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 1 ГБ трафика</li>
+                        <li><span>+</span> Без ограничения по времени</li>
+                        <li><span>+</span> Протоколы VLESS / Hysteria</li>
+                        <li><span>+</span> Базовая скорость</li>
+                    </ul>
+                    <a href="https://t.me/Qenzo_vpn_bot" target="_blank" class="btn btn-outline" style="width: 100%;">ВЗЯТЬ НА ТЕСТ</a>
+                </div>
+
+                <!-- PRO -->
+                <div class="card price-card reveal" style="border-color: rgba(0, 229, 115, 0.5); box-shadow: 0 10px 40px rgba(0, 229, 115, 0.15); transform: scale(1.05); z-index: 10; background: linear-gradient(180deg, rgba(0, 229, 115, 0.05) 0%, transparent 100%), var(--bg-card);">
+                    <div class="plan-name" style="color: var(--primary);">PRO .</div>
+                    <div class="plan-price">15 ₽ <span>/ навсегда</span></div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 15 ГБ трафика</li>
+                        <li><span>+</span> Без ограничения по времени</li>
+                        <li><span>+</span> Приоритетный канал связи</li>
+                        <li><span>+</span> Полное шифрование данных</li>
+                    </ul>
+                    <a href="https://t.me/Qenzo_vpn_bot" target="_blank" class="btn btn-primary" style="width: 100%;">КУПИТЬ PRO</a>
+                </div>
+
+                <!-- WHITELIST -->
+                <div class="card price-card whitelist reveal" style="transition-delay: 0.1s;">
+                    <div class="plan-name">WHITELIST .</div>
+                    <div class="plan-price">20 ₽ <span>/ навсегда</span></div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 10 ГБ трафика</li>
+                        <li><span>+</span> Работа в сетях со строгой фильтрацией</li>
+                        <li><span>+</span> Изолированный пул IP-адресов</li>
+                        <li><span>+</span> Эксклюзивный маршрут</li>
+                    </ul>
+                    <a href="https://t.me/Qenzo_vpn_bot" target="_blank" class="btn" style="width: 100%; background: rgba(0,240,255,0.1); color: var(--wl-color); border: 1px solid rgba(0,240,255,0.3);">КУПИТЬ ДОСТУП</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacts" style="background: rgba(0, 229, 115, 0.02); border-top: 1px solid var(--border-color);">
+        <div class="container">
+            <h2 class="section-title reveal">Ресурсы <span>проекта</span></h2>
+            <div class="grid-2">
+                <a href="https://app.n3k00.ru" target="_blank" class="link-card reveal">
+                    <div class="card-icon" style="margin: 0; font-size: 24px;">💻</div>
+                    <div>
+                        <h4>Личный кабинет</h4>
+                        <p>Управление профилем, генерация ключей и баланс — app.n3k00.ru</p>
+                    </div>
+                </a>
+                <a href="https://t.me/Qenzo_vpn_bot" target="_blank" class="link-card reveal" style="transition-delay: 0.1s;">
+                    <div class="card-icon" style="margin: 0; font-size: 24px;">🤖</div>
+                    <div>
+                        <h4>Telegram Бот</h4>
+                        <p>Мгновенная покупка трафика и настройка — @Qenzo_vpn_bot</p>
+                    </div>
+                </a>
+                <a href="https://t.me/n3k00_tg" target="_blank" class="link-card reveal" style="transition-delay: 0.2s;">
+                    <div class="card-icon" style="margin: 0; font-size: 24px;">📢</div>
+                    <div>
+                        <h4>Канал разработчика</h4>
+                        <p>Новости разработки и обновления — @n3k00_tg</p>
+                    </div>
+                </a>
+                <a href="https://github.com/Nekzes" target="_blank" class="link-card reveal" style="transition-delay: 0.3s;">
+                    <div class="card-icon" style="margin: 0; font-size: 24px;">⌨️</div>
+                    <div>
+                        <h4>GitHub</h4>
+                        <p>Репозитории проектов и исходные коды — github.com/Nekzes</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer style="padding: 60px 0 40px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 14px;">
+        <div class="container reveal">
+            <!-- Кнопка-логотип n3k00 Experience -->
+            <a href="#" class="n3k00-logo-btn">n3k00 <span>Experience</span></a>
+            
+            <p>© 2026 QenzoVPN. Разработано <a href="https://github.com/Nekzes" style="color: var(--primary); text-decoration: none;">Nekzes</a>.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Анимация при скролле
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            var windowHeight = window.innerHeight;
+            for (var i = 0; i < reveals.length; i++) {
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                if (elementTop < windowHeight - 50) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal(); 
+
+        // Canvas: Глобус + Летящие Звёзды (Потоки данных)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        // Данные глобуса
+        let nodes = [];
+        const numNodes = 150; 
+        const radius = 350;
+        let angleX = 0;
+        let angleY = 0;
+
+        // Данные звёзд
+        let stars = [];
+        const numStars = 80; // Количество частиц
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            
+            // Инициализация звезд при ресайзе
+            stars = [];
+            for(let i=0; i<numStars; i++){
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 1.5 + 0.5,
+                    opacity: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+        window.addEventListener('resize', resize);
+        
+        // Инициализация глобуса
+        for (let i = 0; i < numNodes; i++) {
+            let phi = Math.acos(-1 + (2 * i) / numNodes);
+            let theta = Math.sqrt(numNodes * Math.PI) * phi;
+            nodes.push({
+                x: radius * Math.cos(theta) * Math.sin(phi),
+                y: radius * Math.sin(theta) * Math.sin(phi),
+                z: radius * Math.cos(phi)
+            });
+        }
+        resize(); // Вызов для звезд
+
+        function drawScene() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 1. Отрисовка летящих звёзд (частиц)
+            stars.forEach(star => {
+                star.y -= star.speed; // Летят вверх
+                
+                // Возврат вниз, если улетели за экран
+                if(star.y < 0) {
+                    star.y = height;
+                    star.x = Math.random() * width;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 229, 115, ${star.opacity})`;
+                ctx.fill();
+            });
+
+            // 2. Отрисовка глобуса
+            angleY += 0.0015;
+            angleX += 0.0005;
+
+            const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+            const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+
+            let projectedNodes = [];
+
+            nodes.forEach(node => {
+                let x1 = node.x * cosY - node.z * sinY;
+                let z1 = node.z * cosY + node.x * sinY;
+                let y2 = node.y * cosX - z1 * sinX;
+                let z2 = z1 * cosX + node.y * sinX;
+
+                const fl = 800; 
+                const scale = fl / (fl + z2 + radius);
+                
+                const offsetX = width > 768 ? width * 0.75 : width * 0.5;
+                const offsetY = height * 0.5;
+                
+                const x2d = offsetX + x1 * scale;
+                const y2d = offsetY + y2 * scale; 
+
+                projectedNodes.push({ x: x2d, y: y2d, z: z2, scale: scale });
+            });
+
+            projectedNodes.sort((a, b) => b.z - a.z);
+
+            projectedNodes.forEach(p => {
+                if(p.z < radius * 0.8) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2 * p.scale, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 229, 115, ${0.15 + (1 - p.z/radius)*0.5})`;
+                    ctx.fill();
+                }
+            });
+
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < projectedNodes.length; i++) {
+                if(projectedNodes[i].z > 0) continue; 
+                for (let j = i + 1; j < projectedNodes.length; j++) {
+                    if(projectedNodes[j].z > 0) continue;
+                    let dx = projectedNodes[i].x - projectedNodes[j].x;
+                    let dy = projectedNodes[i].y - projectedNodes[j].y;
+                    let dist = dx*dx + dy*dy;
+                    
+                    if (dist < 2500) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 229, 115, ${0.2 - dist/12500})`;
+                        ctx.moveTo(projectedNodes[i].x, projectedNodes[i].y);
+                        ctx.lineTo(projectedNodes[j].x, projectedNodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawScene);
+        }
+        drawScene();
+    </script>
+</body>
+</html>

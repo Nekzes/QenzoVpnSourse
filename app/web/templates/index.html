@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QenzoVPN | Premium Access</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap');
+
+        :root {
+            --bg-base: #060807;
+            --bg-card: #0d1210;
+            --bg-card-hover: #121815;
+            --primary: #00e573;
+            --primary-glow: rgba(0, 229, 115, 0.2);
+            --ultra-color: #ffc107;
+            --text-main: #f0f4f2;
+            --text-muted: #8a9e96;
+            --border-color: rgba(255, 255, 255, 0.06);
+            --danger: #ff4757;
+            --font: 'Manrope', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font); -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            height: 100dvh; 
+            min-height: 100vh;
+        }
+
+        /* 3D Globe Background */
+        #globe-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none; opacity: 0.8;
+        }
+
+        #app {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 500px; height: 100dvh;
+            display: flex; flex-direction: column;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 229, 115, 0.05) 0%, transparent 60%);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        /* Top News Ticker */
+        .news-ticker {
+            background: rgba(0, 229, 115, 0.05); border-bottom: 1px solid var(--border-color);
+            padding: 8px 0; font-size: 10px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px; overflow: hidden; white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ticker-content { display: inline-block; animation: ticker 25s linear infinite; }
+        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 24px 10px; flex-shrink: 0;
+        }
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .logo span { color: var(--primary); }
+        .user-badge {
+            background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 500; color: var(--text-muted); border: 1px solid var(--border-color);
+        }
+
+        /* Main Content */
+        .content-area {
+            flex: 1; overflow-y: auto; 
+            padding: 10px 24px 120px 24px;
+            scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar { display: none; }
+
+        .tab-pane { display: none; animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .tab-pane.active { display: block; }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero */
+        .hero { text-align: left; margin: 30px 0 40px; position: relative; }
+        .hero h1 { font-size: 34px; font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 12px; }
+        .hero h1 span { color: var(--primary); display: block; }
+        .hero p { font-size: 14px; color: var(--text-muted); line-height: 1.5; max-width: 90%; }
+        
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+        .status-badge {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .status-badge .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .status-badge .value { font-size: 14px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
+        .dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 8px var(--primary); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: 700; }
+        
+        .progress-wrap { margin-bottom: 12px; }
+        .progress-bg { height: 6px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 4px; transition: width 1s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 8px;}
+        .progress-labels span b { color: #fff; font-weight: 700; }
+
+        .inactive-msg { font-size: 13px; color: var(--text-muted); text-align: center; padding: 10px 0; font-weight: 500; }
+
+        /* Shop Cards */
+        .shop-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px;
+            padding: 30px 24px; margin-bottom: 20px; transition: 0.3s;
+        }
+        .shop-card:hover { transform: translateY(-3px); border-color: rgba(0, 229, 115, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .shop-card.pro { background: linear-gradient(180deg, rgba(0, 229, 115, 0.04) 0%, transparent 100%), var(--bg-card); }
+        
+        .shop-card.ultra {
+            background: linear-gradient(180deg, rgba(255, 193, 7, 0.05) 0%, transparent 100%), var(--bg-card);
+            border-color: rgba(255, 193, 7, 0.25);
+        }
+        .shop-card.ultra:hover { border-color: rgba(255, 193, 7, 0.5); box-shadow: 0 10px 30px rgba(255, 193, 7, 0.15); }
+        
+        .plan-name { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 10px; display: flex; align-items: center; }
+        .plan-price { font-size: 42px; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 16px; display: flex; align-items: baseline; gap: 8px;}
+        .plan-price span { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .plan-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+        
+        .plan-features { list-style: none; margin-bottom: 30px; display: flex; flex-direction: column; gap: 12px; }
+        .plan-features li { font-size: 13px; color: #d0d0d0; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .plan-features li span { color: var(--primary); font-weight: 800; font-size: 14px; }
+        .shop-card.ultra .plan-features li span { color: var(--ultra-color); }
+
+        .discount-badge {
+            background: var(--danger); color: #fff; padding: 2px 6px; 
+            border-radius: 6px; font-size: 9px; margin-left: 8px; letter-spacing: 0;
+        }
+
+        /* Warning Alert */
+        .alert-warning {
+            background: rgba(255, 71, 87, 0.05); border: 1px solid rgba(255, 71, 87, 0.2);
+            border-left: 4px solid var(--danger); padding: 12px 16px; border-radius: 8px;
+            margin-bottom: 24px; font-size: 12px; color: #ffb3b8; line-height: 1.5;
+        }
+
+        /* TOS Styles */
+        .tos-notice {
+            font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 16px; line-height: 1.4;
+        }
+        .tos-notice a {
+            color: var(--primary); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+        }
+        .tos-content {
+            max-height: 60vh; overflow-y: auto; text-align: left; font-size: 12px; color: #d0d0d0; line-height: 1.6; padding-right: 10px;
+        }
+        .tos-content h4 {
+            color: #fff; font-size: 14px; margin: 16px 0 8px 0; font-weight: 700;
+        }
+        .tos-content h4:first-child { margin-top: 0; }
+        .tos-content p, .tos-content ul { margin-bottom: 12px; }
+        .tos-content ul { padding-left: 20px; }
+        .tos-content::-webkit-scrollbar { width: 4px; }
+        .tos-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* Buttons & Inputs */
+        .btn {
+            width: 100%; background: #1a221f; border: 1px solid rgba(255,255,255,0.05);
+            color: #fff; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            padding: 16px; border-radius: 16px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn:hover { background: #232c28; }
+        
+        .btn-primary { background: var(--primary); color: #000; border: none; }
+        .btn-primary:hover { background: #00ff80; box-shadow: 0 0 20px var(--primary-glow); transform: scale(1.02); }
+        
+        .btn-ultra { background: rgba(255, 193, 7, 0.1); color: var(--ultra-color); border-color: rgba(255, 193, 7, 0.3); }
+        .btn-ultra:hover { background: rgba(255, 193, 7, 0.2); border-color: var(--ultra-color); transform: scale(1.02); }
+        
+        .btn-text-danger {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 0;
+        }
+        .btn-text-danger:hover { color: var(--danger); }
+
+        /* Inputs */
+        .input-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block; }
+        .input-group { position: relative; margin-bottom: 16px; }
+        .input-group input {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            padding: 16px 50px 16px 16px; border-radius: 16px; color: #fff; font-size: 14px;
+            outline: none; transition: 0.3s; font-weight: 500;
+        }
+        .input-group input:focus { border-color: var(--primary); background: rgba(0,229,115,0.02); }
+        .input-group .copy-icon {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            fill: var(--text-muted); width: 20px; height: 20px; cursor: pointer; transition: 0.3s;
+        }
+        .input-group .copy-icon:hover { fill: var(--primary); }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
+            background: rgba(6, 8, 7, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: space-around; align-items: center; z-index: 10; padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            color: var(--text-muted); cursor: pointer; transition: 0.3s; flex: 1;
+        }
+        .nav-item svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: 0.3s; }
+        .nav-item span { font-size: 10px; font-weight: 700; }
+        
+        .nav-item.active { color: #fff; }
+        .nav-item.active svg { stroke: var(--primary); filter: drop-shadow(0 0 8px rgba(0,229,115,0.5)); }
+
+        /* Overlays */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .overlay.active { display: flex; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .modal-box { width: 90%; max-width: 360px; padding: 30px; border-radius: 24px; }
+        .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; text-align: center; }
+
+        /* Toasts */
+        #toast-container { position: absolute; top: 40px; right: 20px; left: 20px; z-index: 200; pointer-events: none; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 16px 20px; border-radius: 16px; color: #fff; font-size: 13px; font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px;
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .toast::before { content: ''; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 8px var(--primary); flex-shrink: 0; }
+        .toast.error::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .toast.fade-out { animation: fadeOutUp 0.3s ease forwards; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-20px); opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="globe-canvas"></canvas>
+
+    <div id="app">
+        <!-- Ticker -->
+        <div class="news-ticker">
+            <div class="ticker-content">
+                НОВОСТИ: ВЫШЕЛ НОВЫЙ ПРОТОКОЛ ОБХОДА &nbsp;&nbsp;///&nbsp;&nbsp; СЕРВЕРА В ЕВРОПЕ ОБНОВЛЕНЫ &nbsp;&nbsp;///&nbsp;&nbsp; 🔥 ГЛОБАЛЬНАЯ СКИДКА НА ТАРИФ ULTRA: ТЕПЕРЬ ВСЕГО 75 ₽ В МЕСЯЦ! &nbsp;&nbsp;///&nbsp;&nbsp; ДВОЙНОЕ ШИФРОВАНИЕ АКТИВНО
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">Qenzo<span>VPN</span></div>
+            <div class="user-badge" id="ui-user-id">Email: ----</div>
+        </div>
+
+        <div id="toast-container"></div>
+
+        <div class="content-area">
+            
+            <!-- ================= HOME TAB ================= -->
+            <div id="tab-home" class="tab-pane active">
+                
+                <div class="hero">
+                    <h1>ПЛАТИ ЗА ОБЪЕМ —<br><span>А НЕ ЗА МИНУТЫ</span></h1>
+                    <p>Разные протоколы для любых ситуаций. Работает без бубна, прокси уже в клиенте.</p>
+                </div>
+
+                <div class="status-grid">
+                    <div class="status-badge">
+                        <span class="label">Шифрование</span>
+                        <span class="value"><div class="dot"></div> AES-256</span>
+                    </div>
+                    <div class="status-badge">
+                        <span class="label">Статус сети</span>
+                        <span class="value"><div class="dot"></div> Secure</span>
+                    </div>
+                </div>
+
+                <!-- Main Tunnel -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Main Tunnel</span>
+                        <span style="font-size: 10px; background: rgba(0,229,115,0.1); color: var(--primary); padding: 4px 8px; border-radius: 8px; font-weight: 800; letter-spacing: 0.5px;">VLESS / HYSTERIA</span>
+                    </div>
+                    
+                    <div id="home-def-active">
+                        <div class="progress-wrap">
+                            <div class="progress-bg"><div class="progress-fill" id="home-def-bar"></div></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>Использовано: <b id="home-def-usage">0 GB</b></span>
+                            <span>Всего: <b id="home-def-total">0 GB</b></span>
+                        </div>
+                    </div>
+                    <div id="home-def-inactive" class="inactive-text inactive-msg" style="display: none;">У вас нет активной подписки.</div>
+                </div>
+            </div>
+
+            <!-- ================= SHOP TAB ================= -->
+            <div id="tab-shop" class="tab-pane">
+                <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 16px;">Тарифы</h2>
+
+                <div class="shop-card">
+                    <div class="plan-name">TEST .</div>
+                    <div class="plan-price">1 ₽ <span>разово</span></div>
+                    <div class="plan-desc">Оцени качество сети и скорость. Хватит на проверку всех соцсетей.</div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 1 ГБ трафика</li>
+                        <li><span>+</span> VLESS / Hysteria2</li>
+                        <li><span>+</span> Базовая скорость</li>
+                    </ul>
+                    <button class="btn" onclick="confirmBuy('test')">ВЗЯТЬ НА ТЕСТ</button>
+                </div>
+
+                <div class="shop-card pro">
+                    <div class="plan-name" style="color: var(--primary);">PRO .</div>
+                    <div class="plan-price">15 ₽ <span>в месяц</span></div>
+                    <div class="plan-desc">Для смартфонов, скроллинга ленты и тех, кому нужен стабильный доступ.</div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 15 ГБ трафика</li>
+                        <li><span>+</span> Приоритетный канал</li>
+                        <li><span>+</span> Полное шифрование</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="confirmBuy('pro')">КУПИТЬ PRO</button>
+                </div>
+
+                <div class="shop-card ultra" style="margin-bottom: 10px;">
+                    <div class="plan-name" style="color: var(--ultra-color);">ULTRA . <span class="discount-badge">СКИДКА -25%</span></div>
+                    <div class="plan-price">75 ₽ <span style="text-decoration: line-through; opacity: 0.5; font-size: 18px; margin: 0 4px;">100 ₽</span> <span>в месяц</span></div>
+                    <div class="plan-desc">Максимальный объем. Для тех, кто смотрит видео и качает файлы.</div>
+                    <ul class="plan-features">
+                        <li><span>+</span> 100 ГБ трафика</li>
+                        <li><span>+</span> Безлимитная скорость</li>
+                        <li><span>+</span> Выделенные узлы</li>
+                    </ul>
+                    <button class="btn btn-ultra" onclick="confirmBuy('ultra')">КУПИТЬ ULTRA</button>
+                </div>
+
+                <div class="card" style="margin-top: 30px; padding: 20px;">
+                    <p style="font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; color: var(--text-muted);">Промокод</p>
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <input type="text" id="promo-input" placeholder="Введите код...">
+                    </div>
+                    <button class="btn" style="padding: 12px;" onclick="applyPromo()">ПРИМЕНИТЬ</button>
+                </div>
+            </div>
+
+            <!-- ================= PROFILE TAB ================= -->
+            <div id="tab-profile" class="tab-pane">
+                <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Профиль</h2>
+
+                <div class="card" style="background: linear-gradient(135deg, rgba(0, 229, 115, 0.05) 0%, transparent 100%); margin-bottom: 24px; padding-bottom: 20px;">
+                    <div class="card-header" style="margin-bottom: 12px;">
+                        <span class="card-title">Идентификация</span>
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">
+                        Логин: <b id="prof-id-display" style="color: #fff;">----</b>
+                    </div>
+                    <!-- ИЗМЕНЕНИЕ ЗДЕСЬ: Поддержка (Почта) -->
+                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">
+                        Поддержка (Почта): <a href="mailto:support.n3k00@gmail.com" style="color: var(--primary); font-weight: 700; text-decoration: none;">support.n3k00@gmail.com</a>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                        <button class="btn-text-danger" onclick="doLogout()" style="padding: 0; font-size: 13px;">
+                            <svg style="width: 16px; height: 16px; fill: currentColor; margin-top:-2px;" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                            ВЫЙТИ ИЗ АККАУНТА
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <div style="flex: 1; background: rgba(255,255,255,0.02); padding: 14px; border-radius: 16px; border: 1px solid var(--border-color);">
+                            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px;">Трафик Main</div>
+                            <div style="font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px;" id="prof-def-traf-txt">0 GB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" style="margin-bottom: 16px;">
+                        <span class="card-title">Main Tunnel</span>
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">VLESS / HYSTERIA</span>
+                    </div>
+                    <div id="prof-def-content">
+                        <label class="input-label">Ваша ссылка конфигурации:</label>
+                        <div class="input-group">
+                            <input type="text" id="link-input-def" readonly value="Загрузка...">
+                            <svg class="copy-icon" onclick="copyLink('def')" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: right;">
+                            <button class="btn-text-danger" onclick="confirmDelete('def')">
+                                <svg style="width: 14px; height: 14px; fill: currentColor; margin-top:-2px;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                Уничтожить туннель
+                            </button>
+                        </div>
+                    </div>
+                    <div id="prof-def-empty" class="inactive-msg" style="display: none;">Нет активной подписки.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= BOTTOM NAV ================= -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('home', this)">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>ГЛАВНАЯ</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('shop', this)">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <span>ТАРИФЫ</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('profile', this)">
+                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>ПРОФИЛЬ</span>
+            </div>
+        </div>
+
+        <!-- ================= MODALS ================= -->
+        
+        <!-- Auth Modal -->
+        <div id="auth-modal" class="overlay">
+            <div class="card modal-box">
+                <div class="modal-title" id="auth-title">ВХОД В АККАУНТ</div>
+                <div class="input-group">
+                    <input type="text" id="auth-email" placeholder="Ваш Логин (Email)" autocomplete="off">
+                </div>
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <input type="password" id="auth-pass" placeholder="Пароль">
+                </div>
+
+                <div id="reg-info" style="display: none; background: rgba(0,229,115,0.05); border: 1px dashed rgba(0,229,115,0.3); padding: 14px; border-radius: 16px; margin-bottom: 20px; text-align: left; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                    Придумайте логин и пароль. Указывать реальный email не обязательно.
+                </div>
+
+                <!-- TOS Notice -->
+                <div class="tos-notice">
+                    При входе и регистрации вы принимаете<br>
+                    <a onclick="showTosModal()">пользовательское соглашение</a>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="toggleAuthMode()" id="auth-toggle-btn" style="flex: 1; padding: 16px 0; font-size: 12px;">РЕГИСТРАЦИЯ</button>
+                    <button class="btn btn-primary" onclick="doAuth()" id="auth-action-btn" style="flex: 1.2; padding: 16px 0;">ВОЙТИ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOS Modal (Пользовательское соглашение) -->
+        <div id="tos-modal" class="overlay" style="z-index: 105;">
+            <div class="card modal-box" style="padding: 20px; max-width: 400px; width: 95%;">
+                <div class="modal-title" style="font-size: 18px; margin-bottom: 15px;">СОГЛАШЕНИЕ</div>
+                <div class="tos-content">
+                    <h4>1. Регистрация и аккаунт</h4>
+                    <p>1.1. Для использования Сервиса Пользователю необходимо пройти процедуру регистрации.</p>
+                    <p>1.2. При регистрации от Пользователя требуется придумать и ввести только логин и пароль. Предоставление адреса электронной почты (e-mail) или других персональных данных не является обязательным.</p>
+                    <p>1.3. Пользователь несет полную ответственность за сохранность своего логина и пароля, а также за любые действия, совершенные под его аккаунтом. В случае утраты доступа к аккаунту восстановление может быть невозможным из-за отсутствия привязки к электронной почте.</p>
+                    
+                    <h4>2. Тарифы, оплата и списание трафика</h4>
+                    <p>2.1. Доступ к услугам VPN предоставляется на основе предоплаченных пакетов трафика (тарифов). В Сервисе предусмотрены следующие базовые тарифы:</p>
+                    <ul>
+                        <li>1 рубль — 1 ГБ трафика;</li>
+                        <li>15 рублей — 15 ГБ трафика;</li>
+                        <li>75 рублей — 100 ГБ трафика.</li>
+                    </ul>
+                    <p>2.2. Комиссия при оплате: При совершении покупки Пользователь дополнительно оплачивает комиссию в размере 8% от стоимости выбранного тарифа. Эта сумма прибавляется к итоговому счету при оплате.</p>
+                    <p>2.3. Сгорание остатков: При покупке (активации) нового тарифа все неизрасходованные гигабайты (остаток трафика) от предыдущего тарифа аннулируются (сгорают). Трафик от старого и нового тарифов не суммируется.</p>
+                    
+                    <h4>3. Политика возврата средств и компенсаций</h4>
+                    <p>3.1. Сервис не осуществляет возврат денежных средств (фиатных денег) на банковские карты, счета или электронные кошельки Пользователя ни при каких обстоятельствах.</p>
+                    <p>3.2. В случае возникновения спорных ситуаций, технических сбоев на стороне Сервиса или иных обстоятельств, требующих возврата, компенсация производится исключительно в виде начисления гигабайт (трафика) на баланс аккаунта Пользователя в Сервисе.</p>
+                    
+                    <h4>4. Ограничение ответственности</h4>
+                    <p>4.1. Услуги Сервиса QenzoVpn предоставляются по принципу «как есть» (as is).</p>
+                    <p>4.2. Администрация Сервиса не несет ответственности за перебои в работе VPN, снижение скорости, временную или полную недоступность серверов.</p>
+                    <p>4.3. Сервис снимает с себя любую ответственность за неработоспособность услуг, вызванную региональными блокировками, ограничениями со стороны интернет-провайдеров Пользователя, действиями государственных регуляторов (включая блокировки протоколов) и иными обстоятельствами непреодолимой силы.</p>
+                    <p>4.4. Пользователь понимает и принимает, что обход региональных блокировок или доступность конкретных веб-ресурсов не гарантируется.</p>
+                    
+                    <h4>5. Правила использования</h4>
+                    <p>5.1. Пользователю запрещается использовать Сервис для совершения любых незаконных действий, включая, но не ограничиваясь:</p>
+                    <ul>
+                        <li>Распространение вредоносного программного обеспечения;</li>
+                        <li>Организация DDoS-атак, спам-рассылок, кардинг, мошенничество;</li>
+                        <li>Нарушение авторских прав и скачивание нелегального контента (в юрисдикциях, где это преследуется по закону);</li>
+                        <li>Любые действия, создающие чрезмерную нагрузку на инфраструктуру QenzoVpn.</li>
+                    </ul>
+                    <p>5.2. При выявлении нарушений правил использования Администрация оставляет за собой право заблокировать аккаунт Пользователя без предупреждения и без возмещения остатка трафика.</p>
+                    
+                    <h4>6. Изменение условий</h4>
+                    <p>6.1. Администрация Сервиса оставляет за собой право в любой момент вносить изменения в настоящее Соглашение, включая изменение стоимости тарифов и размера комиссии.</p>
+                    <p>6.2. Продолжение использования Сервиса после внесения изменений означает согласие Пользователя с новой редакцией Соглашения.</p>
+                </div>
+                <button class="btn" style="margin-top: 20px; padding: 12px;" onclick="closeTosModal()">ЗАКРЫТЬ</button>
+            </div>
+        </div>
+
+        <!-- Confirm DELETE Modal -->
+        <div id="confirm-modal" class="overlay">
+            <div class="card modal-box">
+                <div class="modal-title" style="color: var(--danger);">ВНИМАНИЕ</div>
+                <p style="font-size: 14px; text-align: center; color: var(--text-muted); margin-bottom: 24px; font-weight: 500;">
+                    Вы действительно хотите навсегда удалить эту конфигурацию?
+                </p>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn" onclick="closeConfirmModal()">ОТМЕНА</button>
+                    <button class="btn btn-danger" id="confirm-delete-btn" style="background: var(--danger); color: #fff; border:none;">УДАЛИТЬ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm BUY Modal -->
+        <div id="buy-confirm-modal" class="overlay">
+            <div class="card modal-box">
+                <div class="modal-title" style="color: var(--primary);">ПОДТВЕРЖДЕНИЕ</div>
+                <p style="font-size: 14px; text-align: center; color: var(--text-muted); margin-bottom: 24px; font-weight: 500; line-height: 1.5;">
+                    При активации нового тарифа <b style="color: #fff;">все неиспользованные гигабайты сгорят</b>. Текущая подписка будет заменена.<br><br>Вы уверены?
+                </p>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn" onclick="closeBuyModal()">ОТМЕНА</button>
+                    <button class="btn btn-primary" onclick="executeBuy()">ПРОДОЛЖИТЬ</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = '/api'; 
+        let globalUserId = '';
+        let currentDeleteType = null;
+        let pendingBuyCode = null; 
+        let pollInterval = null;
+        let isRegMode = false;
+
+        /* --- UI UTILS --- */
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabId, navElement) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            navElement.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(el => {
+                el.classList.remove('active');
+                el.style.animation = 'none';
+            });
+            
+            const target = document.getElementById('tab-' + tabId);
+            target.classList.add('active');
+            void target.offsetWidth; 
+            target.style.animation = 'fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+            
+            if(tabId === 'home' || tabId === 'profile') loadUserData();
+        }
+
+        function toggleAuthMode() {
+            isRegMode = !isRegMode;
+            document.getElementById('auth-title').innerText = isRegMode ? 'РЕГИСТРАЦИЯ' : 'ВХОД В АККАУНТ';
+            document.getElementById('auth-action-btn').innerText = isRegMode ? 'СОЗДАТЬ' : 'ВОЙТИ';
+            document.getElementById('auth-toggle-btn').innerText = isRegMode ? 'НАЗАД КО ВХОДУ' : 'РЕГИСТРАЦИЯ';
+            document.getElementById('reg-info').style.display = isRegMode ? 'block' : 'none';
+        }
+
+        function showTosModal() {
+            document.getElementById('tos-modal').classList.add('active');
+        }
+
+        function closeTosModal() {
+            document.getElementById('tos-modal').classList.remove('active');
+        }
+
+        function formatTraf(val) {
+            if (!val && val !== 0) return '0 GB';
+            let str = String(val).trim();
+            if (!/[a-zA-Z]/.test(str)) {
+                str += ' GB';
+            }
+            return str;
+        }
+
+        /* --- API WRAPPER --- */
+        async function apiCall(endpoint, options = {}, isLogin = false) {
+            options.credentials = 'include';
+            try {
+                const res = await fetch(API_BASE + endpoint, options);
+                if (res.status === 401 && !isLogin) {
+                    document.getElementById('auth-modal').classList.add('active');
+                    throw new Error('Unauthorized');
+                }
+                return res;
+            } catch (err) {
+                if(err.message !== 'Unauthorized') console.error('API Error:', err);
+                throw err;
+            }
+        }
+
+        /* --- CORE LOGIC --- */
+        async function checkAuth() {
+            try {
+                const res = await apiCall('/login', { method: 'GET' }, true);
+                if (res.status === 200) {
+                    const data = await res.json();
+                    if (data.auth) {
+                        setAuthData(data.user_id);
+                        return;
+                    }
+                }
+            } catch(e) {}
+            document.getElementById('auth-modal').classList.add('active');
+        }
+
+        async function doAuth() {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            if(!email || !pass) return showToast('Введите логин и пароль', 'error');
+
+            if (isRegMode) {
+                const fd = new FormData();
+                fd.append('email', email);
+                fd.append('password', pass);
+                
+                try {
+                    const res = await apiCall('/reg', { method: 'POST', body: fd }, true);
+                    const data = await res.json();
+                    if (data.status) {
+                        showToast(data.des || 'Успешная регистрация!');
+                        toggleAuthMode();
+                        document.getElementById('auth-pass').value = '';
+                    } else {
+                        showToast(data.error || 'Ошибка регистрации', 'error');
+                    }
+                } catch(e) { showToast('Ошибка сети', 'error'); }
+            } else {
+                try {
+                    const res = await apiCall('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, password: pass })
+                    }, true);
+
+                    const data = await res.json();
+                    if (res.status === 200 && data.status) {
+                        setAuthData(email);
+                        showToast('Успешный вход');
+                    } else {
+                        showToast(data.error || 'Ошибка входа', 'error');
+                    }
+                } catch(e) { showToast('Ошибка сети', 'error'); }
+            }
+        }
+
+        async function doLogout() {
+            try {
+                const res = await fetch(API_BASE + '/exit', { credentials: 'include' });
+                if (res.ok) {
+                    showToast('Вы вышли из системы');
+                    globalUserId = '';
+                    document.getElementById('ui-user-id').innerText = 'Логин: ----';
+                    document.getElementById('prof-id-display').innerText = '----';
+                    document.getElementById('auth-email').value = '';
+                    document.getElementById('auth-pass').value = '';
+                    setUIDisabled('def');
+                    document.getElementById('auth-modal').classList.add('active');
+                }
+            } catch(e) {
+                showToast('Ошибка сети при выходе', 'error');
+            }
+        }
+
+        function setAuthData(email) {
+            document.getElementById('auth-modal').classList.remove('active');
+            globalUserId = email;
+            document.getElementById('ui-user-id').innerText = `Логин: ${email}`;
+            document.getElementById('prof-id-display').innerText = email;
+            loadUserData();
+        }
+
+        async function loadUserData() {
+            await fetchTypeData('def');
+        }
+
+        async function fetchTypeData(type) {
+            try {
+                const linkRes = await apiCall(`/sublink?tr_type=${type}`);
+                const linkData = await linkRes.json();
+                
+                if (!linkRes.ok || !linkData.status || !linkData.sub_link) {
+                    setUIDisabled(type);
+                    return;
+                }
+
+                document.getElementById(`link-input-${type}`).value = linkData.sub_link;
+                setUIEnabled(type);
+
+                const trafRes = await apiCall(`/traffik?tr_type=${type}`);
+                const trafData = await trafRes.json();
+
+                if (trafData.status) {
+                    let usageStr = formatTraf(trafData.usage);
+                    let totalStr = formatTraf(trafData.total);
+
+                    document.getElementById(`home-${type}-usage`).innerText = usageStr;
+                    document.getElementById(`home-${type}-total`).innerText = totalStr;
+                    
+                    let usageVal = parseFloat(trafData.usage) || 0;
+                    let totalVal = parseFloat(trafData.total) || 1;
+                    let pct = Math.min((usageVal / totalVal) * 100, 100);
+                    document.getElementById(`home-${type}-bar`).style.width = pct + '%';
+
+                    document.getElementById(`prof-${type}-traf-txt`).innerHTML = `${usageStr} <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">/ ${totalStr}</span>`;
+                }
+            } catch(e) {
+                setUIDisabled(type);
+            }
+        }
+
+        function setUIDisabled(type) {
+            document.getElementById(`home-${type}-active`).style.display = 'none';
+            document.getElementById(`home-${type}-inactive`).style.display = 'block';
+            document.getElementById(`prof-${type}-content`).style.display = 'none';
+            document.getElementById(`prof-${type}-empty`).style.display = 'block';
+            document.getElementById(`prof-${type}-traf-txt`).innerText = "Нет подписки";
+        }
+
+        function setUIEnabled(type) {
+            document.getElementById(`home-${type}-active`).style.display = 'block';
+            document.getElementById(`home-${type}-inactive`).style.display = 'none';
+            document.getElementById(`prof-${type}-content`).style.display = 'block';
+            document.getElementById(`prof-${type}-empty`).style.display = 'none';
+        }
+
+        /* --- INTERACTIONS --- */
+        function copyLink(type) {
+            const input = document.getElementById(`link-input-${type}`);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value).then(() => {
+                showToast('Ссылка скопирована!');
+            });
+        }
+
+        function confirmBuy(subCode) {
+            pendingBuyCode = subCode;
+            document.getElementById('buy-confirm-modal').classList.add('active');
+        }
+
+        function closeBuyModal() {
+            pendingBuyCode = null;
+            document.getElementById('buy-confirm-modal').classList.remove('active');
+        }
+
+        function executeBuy() {
+            if (pendingBuyCode) {
+                buySub(pendingBuyCode);
+            }
+            closeBuyModal();
+        }
+
+        async function buySub(subCode) {
+            try {
+                const fd = new FormData();
+                fd.append('sub_code', subCode);
+                const res = await apiCall('/create_pay', { method: 'POST', body: fd });
+                const data = await res.json();
+                
+                if (data.pay_link) {
+                    window.open(data.pay_link, '_blank');
+                    startPayPolling();
+                } else {
+                    showToast('Ошибка генерации ссылки', 'error');
+                }
+            } catch (e) {}
+        }
+
+        function startPayPolling() {
+            if(pollInterval) clearInterval(pollInterval);
+            showToast('Ожидаем оплату...');
+            
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(API_BASE + '/success_pay', { credentials: 'include' });
+                    if (res.status === 200) {
+                        clearInterval(pollInterval);
+                        showToast('Оплата прошла успешно!');
+                        loadUserData();
+                    }
+                } catch(e) {}
+            }, 4000);
+        }
+
+        async function applyPromo() {
+            const promo = document.getElementById('promo-input').value;
+            if(!promo) return;
+            try {
+                const fd = new FormData();
+                fd.append('promo', promo);
+                const res = await apiCall('/promo', { method: 'POST', body: fd });
+                
+                const data = await res.json(); 
+                
+                if(res.ok && data.status) {
+                    showToast('Промокод применен!');
+                    document.getElementById('promo-input').value = '';
+                    loadUserData();
+                } else {
+                    showToast(data.error || 'Неверный промокод', 'error');
+                }
+            } catch(e) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        function confirmDelete(type) {
+            currentDeleteType = type;
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            currentDeleteType = null;
+        }
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if(!currentDeleteType) return;
+            try {
+                const fd = new FormData();
+                fd.append('tr_type', currentDeleteType);
+                const res = await apiCall('/del', { method: 'POST', body: fd });
+                
+                if(res.ok) {
+                    showToast('Подписка удалена');
+                    setUIDisabled(currentDeleteType);
+                }
+            } catch(e) {
+            } finally {
+                closeConfirmModal();
+            }
+        });
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
+
+        /* --- 3D GLOBE CANVAS ANIMATION --- */
+        const canvas = document.getElementById('globe-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let nodes = [];
+        const numNodes = 120;
+        const radius = 250;
+        let angleX = 0;
+        let angleY = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (let i = 0; i < numNodes; i++) {
+            let phi = Math.acos(-1 + (2 * i) / numNodes);
+            let theta = Math.sqrt(numNodes * Math.PI) * phi;
+            nodes.push({
+                x: radius * Math.cos(theta) * Math.sin(phi),
+                y: radius * Math.sin(theta) * Math.sin(phi),
+                z: radius * Math.cos(phi)
+            });
+        }
+
+        function drawGlobe() {
+            ctx.clearRect(0, 0, width, height);
+            
+            angleY += 0.002;
+            angleX += 0.001;
+
+            const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+            const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+
+            let projectedNodes = [];
+
+            nodes.forEach(node => {
+                let x1 = node.x * cosY - node.z * sinY;
+                let z1 = node.z * cosY + node.x * sinY;
+                let y2 = node.y * cosX - z1 * sinX;
+                let z2 = z1 * cosX + node.y * sinX;
+
+                const fl = 600; 
+                const scale = fl / (fl + z2 + radius);
+                const x2d = (width / 2) + x1 * scale;
+                const y2d = (height / 3) + y2 * scale; 
+
+                projectedNodes.push({ x: x2d, y: y2d, z: z2, scale: scale });
+            });
+
+            projectedNodes.sort((a, b) => b.z - a.z);
+
+            projectedNodes.forEach(p => {
+                if(p.z < radius * 0.8) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2 * p.scale, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 229, 115, ${0.1 + (1 - p.z/radius)*0.5})`;
+                    ctx.fill();
+                }
+            });
+
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < projectedNodes.length; i++) {
+                if(projectedNodes[i].z > 0) continue; 
+                for (let j = i + 1; j < projectedNodes.length; j++) {
+                    if(projectedNodes[j].z > 0) continue;
+                    let dx = projectedNodes[i].x - projectedNodes[j].x;
+                    let dy = projectedNodes[i].y - projectedNodes[j].y;
+                    let dist = dx*dx + dy*dy;
+                    
+                    if (dist < 1500) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 229, 115, ${0.15 - dist/10000})`;
+                        ctx.moveTo(projectedNodes[i].x, projectedNodes[i].y);
+                        ctx.lineTo(projectedNodes[j].x, projectedNodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(drawGlobe);
+        }
+        drawGlobe();
+
+    </script>
+</body>
+</html>
