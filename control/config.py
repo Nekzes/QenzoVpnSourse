@@ -1,17 +1,17 @@
 class SERVER:
     VERSION = "1.0a"
-    SECRET_KEY = 'nek07037'
+    SECRET_KEY = ''
     
 class VpnSDK:
-    BASE_URL = "https://vpn.n3k00.ru:7037/nek0"
-    SUB_URL = "https://vpn.n3k00.ru:2096"
+    BASE_URL = ""
+    SUB_URL = ""
     TOKEN = ""
     INBOUNDS = [1,2,4,17,18,19]
     USED_TRIALS_FILE = "used_trials.txt"
 
 class WlVpnSDK:
-    BASE_URL = "http://158.160.147.14:58667/LLfYxuWha9xJeMiaM8"
-    SUB_URL = "http://158.160.147.14:2096"
+    BASE_URL = ""
+    SUB_URL = ""
     TOKEN = ""
     INBOUNDS = [1]
 
@@ -20,8 +20,8 @@ class PaySDK:
     SECRET = ""
     SECRET_SUB_SERVICES_TOKEN = ""
     CURRENCY = "RUB"
-    RETURN_LINK = "https://app.n3k00.ru"
-    FAILED_LINK = "https://app.n3k00.ru"
+    RETURN_LINK = ""
+    FAILED_LINK = ""
     SUB_SERVICE = ['']
     TARIFS = {"pro": {"price": 15,
                         "gb": 15,
