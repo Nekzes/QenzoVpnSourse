@@ -1,3 +1,3 @@
 class Server:
-    BASE_URL = 'https://control.n3k00.ru'
+    BASE_URL = ''
     SECRET_KEY = ''
